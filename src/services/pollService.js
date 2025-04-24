@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001';
+const API_URL = 'http://localhost:3000';
 
 class ApiError extends Error {
   constructor(message, status) {
@@ -9,13 +9,11 @@ class ApiError extends Error {
 }
 
 const handleResponse = async (response) => {
-  const data = await response.json();
-  
   if (!response.ok) {
-    throw new ApiError(data.error || 'Đã xảy ra lỗi', response.status);
+    const error = await response.json();
+    throw new ApiError(error.message || 'Something went wrong', response.status);
   }
-  
-  return data;
+  return response.json();
 };
 
 // Dữ liệu mẫu cho testing
@@ -46,100 +44,80 @@ const mockPolls = [
   }
 ];
 
-export const getPolls = async () => {
-  // try {
-  //   const response = await fetch(`${API_URL}/polls`);
-  //   return handleResponse(response);
-  // } catch (err) {
-  //   if (err instanceof ApiError) {
-  //     throw err;
-  //   }
-  //   throw new ApiError('Không thể kết nối đến server', 0);
-  // }
-  return mockPolls;
+export const getPolls = async (showResults = false) => {
+  try {
+    const response = await fetch(`${API_URL}/polls?showResults=${showResults}`);
+    return handleResponse(response);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError('Không thể kết nối đến server', 0);
+  }
 };
 
 export const createPoll = async (pollData) => {
-  // try {
-  //   const response = await fetch(`${API_URL}/polls`, {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify(pollData),
-  //   });
-    
-  //   return handleResponse(response);
-  // } catch (err) {
-  //   if (err instanceof ApiError) {
-  //     throw err;
-  //   }
-  //   throw new ApiError('Không thể kết nối đến server', 0);
-  // }
-  const newPoll = {
-    id: Math.random().toString(36).substr(2, 9),
-    title: pollData.title,
-    created_at: new Date().toISOString(),
-    expires_at: pollData.expires_at,
-    show_results: pollData.show_results,
-    options: pollData.options.map(option => ({
-      id: Math.random().toString(36).substr(2, 9),
-      text: option,
-      votes: 0
-    }))
-  };
-  mockPolls.unshift(newPoll);
-  return { id: newPoll.id };
+  try {
+    const response = await fetch(`${API_URL}/polls`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(pollData),
+    });
+    return handleResponse(response);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError('Không thể kết nối đến server', 0);
+  }
 };
 
-export const getPoll = async (pollId) => {
-  // try {
-  //   const response = await fetch(`${API_URL}/polls/${pollId}`);
-  //   return handleResponse(response);
-  // } catch (err) {
-  //   if (err instanceof ApiError) {
-  //     throw err;
-  //   }
-  //   throw new ApiError('Không thể kết nối đến server', 0);
-  // }
-  const poll = mockPolls.find(p => p.id === pollId);
-  if (!poll) {
-    throw new ApiError('Poll not found', 404);
+export const getPollById = async (id) => {
+  try {
+    const response = await fetch(`${API_URL}/polls/${id}`);
+    return handleResponse(response);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError('Không thể kết nối đến server', 0);
   }
-  return poll;
 };
 
 export const votePoll = async (pollId, optionId) => {
-  // try {
-  //   const response = await fetch(`${API_URL}/polls/${pollId}/vote`, {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({ optionId }),
-  //   });
-    
-  //   return handleResponse(response);
-  // } catch (err) {
-  //   if (err instanceof ApiError) {
-  //     throw err;
-  //   }
-  //   throw new ApiError('Không thể kết nối đến server', 0);
-  // }
-  const poll = mockPolls.find(p => p.id === pollId);
-  if (!poll) {
-    throw new ApiError('Poll not found', 404);
+  try {
+    const response = await fetch(`${API_URL}/polls/${pollId}/vote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ optionId }),
+    });
+    return handleResponse(response);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError('Không thể kết nối đến server', 0);
   }
+};
 
-  // Kiểm tra thời gian hết hạn
-  if (new Date(poll.expires_at) < new Date()) {
-    throw new ApiError('Poll đã hết hạn', 400);
+export const togglePollResults = async (pollId, showResults) => {
+  try {
+    const response = await fetch(`${API_URL}/polls/${pollId}/show-results`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ showResults }),
+    });
+    return handleResponse(response);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      throw err;
+    }
+    throw new ApiError('Không thể kết nối đến server', 0);
   }
-
-  const option = poll.options.find(o => o.id === optionId);
-  if (!option) {
-    throw new ApiError('Option not found', 404);
-  }
-  option.votes++;
-  return { success: true };
 }; 

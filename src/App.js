@@ -1,32 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './components/Home';
+import PollList from './components/PollList';
 import CreatePoll from './components/CreatePoll';
 import ViewPoll from './components/ViewPoll';
 
 function App() {
+  const [polls, setPolls] = useState([]);
+
+  const handlePollCreated = (newPoll) => {
+    setPolls([newPoll, ...polls]);
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-100">
-        <nav className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex">
-                <div className="flex-shrink-0 flex items-center">
-                  <h1 className="text-xl font-bold text-gray-900">QuickPolls</h1>
-                </div>
-              </div>
-            </div>
+        <div className="container mx-auto py-8">
+          <h1 className="text-3xl font-bold text-center mb-8">QuickPolls</h1>
+          <div className="max-w-2xl mx-auto">
+            <Routes>
+              <Route path="/" element={<PollList polls={polls} />} />
+              <Route path="/create" element={<CreatePoll onPollCreated={handlePollCreated} />} />
+              <Route path="/poll/:id" element={<ViewPoll />} />
+            </Routes>
           </div>
-        </nav>
-
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/create" element={<CreatePoll />} />
-            <Route path="/poll/:id" element={<ViewPoll />} />
-          </Routes>
-        </main>
+        </div>
       </div>
     </Router>
   );

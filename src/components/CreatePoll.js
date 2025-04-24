@@ -5,11 +5,11 @@ import ErrorMessage from './ui/ErrorMessage';
 import { createPoll } from '../services/pollService';
 import { useError } from '../hooks/useError';
 
-function CreatePoll() {
+const CreatePoll = ({ onPollCreated }) => {
   const [title, setTitle] = useState('');
   const [options, setOptions] = useState(['', '']);
   const [expiresAt, setExpiresAt] = useState('');
-  const [showResults, setShowResults] = useState(true);
+  const [showResults, setShowResults] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdPollId, setCreatedPollId] = useState(null);
   const [showCopied, setShowCopied] = useState(false);
@@ -39,13 +39,19 @@ function CreatePoll() {
     }
 
     try {
-      const data = await createPoll({
+      const pollData = {
         title,
         options: validOptions,
         expires_at: expiresAt || null,
         show_results: showResults
-      });
-      setCreatedPollId(data.id);
+      };
+      const result = await createPoll(pollData);
+      setCreatedPollId(result.id);
+      onPollCreated(result.poll);
+      setTitle('');
+      setOptions(['', '']);
+      setShowResults(false);
+      clearError();
     } catch (err) {
       handleError(err);
     } finally {
@@ -193,7 +199,7 @@ function CreatePoll() {
                   <input
                     type="radio"
                     checked={showResults}
-                    onChange={() => setShowResults(true)}
+                    onChange={(e) => setShowResults(true)}
                     className="form-radio text-indigo-600"
                   />
                   <span className="ml-2">Hiển thị ngay</span>
@@ -202,7 +208,7 @@ function CreatePoll() {
                   <input
                     type="radio"
                     checked={!showResults}
-                    onChange={() => setShowResults(false)}
+                    onChange={(e) => setShowResults(false)}
                     className="form-radio text-indigo-600"
                   />
                   <span className="ml-2">Chỉ hiển thị sau khi hết hạn</span>
@@ -232,6 +238,6 @@ function CreatePoll() {
       </div>
     </div>
   );
-}
+};
 
 export default CreatePoll; 
